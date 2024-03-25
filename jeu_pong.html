@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Mini Jeux</title>
+</head>
+<body>
+    
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Pong Game</title>
+        <style>
+            body {
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background-color: #222;
+            }
+    
+            canvas {
+                border: 2px solid #fff;
+            }
+        </style>
+    </head>
+    
+    <body>
+    
+        <script>
+            // Initialisation du canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            document.body.appendChild(canvas);
+    
+            // Paramètres du canvas
+            const WINDOW_WIDTH = 800;
+            const WINDOW_HEIGHT = 600;
+            const FPS = 60;
+    
+            canvas.width = WINDOW_WIDTH;
+            canvas.height = WINDOW_HEIGHT;
+    
+            // Couleurs
+            const WHITE = "#FFFFFF";
+            const BLACK = "#000000";
+    
+            // Rectangles pour les raquettes et la balle
+            let player = { x: WINDOW_WIDTH - 20, y: WINDOW_HEIGHT / 2 - 70, width: 10, height: 140 };
+            let opponent = { x: 10, y: WINDOW_HEIGHT / 2 - 70, width: 10, height: 140 };
+            let ball = { x: WINDOW_WIDTH / 2 - 15, y: WINDOW_HEIGHT / 2 - 15, width: 15, height: 15 };
+    
+            // Vitesses de la balle
+            let ball_speed_x = 5;
+            let ball_speed_y = 5;
+            const ball_speed_x_init = 5;
+            const ball_speed_y_init = 5;
+    
+            // Scores des joueurs
+            let player_score = 0;
+            let opponent_score = 0;
+    
+            // Variables pour les mouvements des raquettes
+            let player_speed = 0;
+            const opponent_speed = 4.25;
+    
+            // Fonction pour redessiner les éléments du jeu
+            function drawElements() {
+                ctx.fillStyle = BLACK;
+                ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+                ctx.fillStyle = WHITE;
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.fillRect(opponent.x, opponent.y, opponent.width, opponent.height);
+                ctx.beginPath();
+                ctx.fillStyle = WHITE;
+                ctx.arc(ball.x + ball.width / 2, ball.y + ball.height / 2, ball.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = WHITE;
+                ctx.beginPath();
+                ctx.moveTo(WINDOW_WIDTH / 2, 0);
+                ctx.lineTo(WINDOW_WIDTH / 2, WINDOW_HEIGHT);
+                ctx.stroke();
+    
+                // Affichage des scores
+                ctx.font = "bold 74px Arial";
+                ctx.fillStyle = WHITE;
+                ctx.fillText(player_score, WINDOW_WIDTH / 2 + 30, 70);
+                ctx.fillText(opponent_score, WINDOW_WIDTH / 2 - 50, 70);
+            }
+    
+            // Fonction principale du jeu
+            function gameLoop() {
+                // Gestion des mouvements
+                window.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowUp') player_speed = -7;
+                    else if (e.key === 'ArrowDown') player_speed = 7;
+                });
+    
+                window.addEventListener('keyup', function (e) {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') player_speed = 0;
+                });
+    
+                // Logique du jeu
+                ball.x += ball_speed_x;
+                ball.y += ball_speed_y;
+    
+                player.y += player_speed;
+    
+                // Rebond de la balle sur les raquettes
+                if (
+                    ball.x < player.x + player.width &&
+                    ball.x + ball.width > player.x &&
+                    ball.y < player.y + player.height &&
+                    ball.y + ball.height > player.y
+                ) {
+                    ball_speed_x *= -1.15;
+                    ball_speed_y *= Math.random() * (1.1 - 0.9) + 0.9; // Ajout d'une légère variation
+                } else if (
+                    ball.x < opponent.x + opponent.width &&
+                    ball.x + ball.width > opponent.x &&
+                    ball.y < opponent.y + opponent.height &&
+                    ball.y + ball.height > opponent.y
+                ) {
+                    ball_speed_x *= -1.15;
+                    ball_speed_y *= Math.random() * (1.1 - 0.9) + 0.9; // Ajout d'une légère variation
+                }
+    
+                // Rebond de la balle sur les limites de l'écran
+                if (ball.y <= 0 || ball.y >= WINDOW_HEIGHT - ball.height) {
+                    ball_speed_y *= -1;
+                }
+    
+                // Lorsqu'un joueur marque un point
+                if (ball.x <= 0 || ball.x >= WINDOW_WIDTH - ball.width) {
+                    if (ball.x <= 0) player_score += 1;
+                    else opponent_score += 1;
+    
+                    // Réinitialisation de la position et de la vitesse de la balle après un point
+                    ball.x = WINDOW_WIDTH / 2 - ball.width / 2;
+                    ball.y = WINDOW_HEIGHT / 2 - ball.height / 2;
+                    ball_speed_x = ball_speed_x_init * (Math.random() < 0.5 ? -1 : 1);
+                    ball_speed_y = ball_speed_y_init * (Math.random() < 0.5 ? -1 : 1);
+                }
+    
+                // Limite de déplacement des raquettes
+                if (player.y <= 0) player.y = 0;
+                else if (player.y + player.height >= WINDOW_HEIGHT) player.y = WINDOW_HEIGHT - player.height;
+    
+                // Mouvement de l'adversaire en fonction de la position de la balle
+                if (ball.y > WINDOW_HEIGHT/2 + WINDOW_HEIGHT/4){
+                    opponent.y += 0;
+                } else if (opponent.y + opponent.height / 2 < ball.y + ball.height / 2) {
+                    // Si la position y de l'adversaire est inférieure à celle de la balle, déplacer vers le bas
+                    opponent.y += opponent_speed;
+                } else if (opponent.y + opponent.height / 2 > ball.y + ball.height / 2) {
+                    // Si la position y de l'adversaire est supérieure à celle de la balle, déplacer vers le haut
+                    opponent.y -= opponent_speed;
+                }
+                
+                // Affichage des éléments
+                drawElements();
+    
+                // Vérification de la fin de la partie (10 points)
+                if (player_score === 10 || opponent_score === 10) {
+                    // Affichage du gagnant
+                    ctx.font = "bold 100px Arial";
+                    const winnerText = player_score === 10 ? "Player 1 wins!" : "Player 2 wins!";
+                    ctx.fillText(winnerText, WINDOW_WIDTH / 2 - 325, WINDOW_HEIGHT / 2 - 50);
+                    clearInterval(gameInterval);
+                    setTimeout(() => {
+                        alert(winnerText);
+                        document.location.reload();
+                    }, 3000);
+                }
+            }
+    
+            // Boucle principale du jeu
+            const gameInterval = setInterval(gameLoop, 1000 / FPS);
+    
+        </script>
+    </body>
+</html>
